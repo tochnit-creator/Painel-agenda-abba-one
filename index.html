@@ -57,6 +57,20 @@ body::after{
 .verse .drop{color:var(--gold)}
 .verse-ref{font-family:var(--mono); font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--gold-deep); margin-top:20px}
 .verse-date{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--text-faint); margin-top:8px; text-transform:capitalize}
+/* estudo do versículo */
+.verse-more{margin-top:22px; background:transparent; border:none; cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold-deep); display:inline-flex; align-items:center; gap:9px; padding:6px 2px; transition:.25s}
+.verse-more:hover{color:var(--gold)}
+.verse-more .chev{transition:transform .35s; display:inline-block}
+.verse-more[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.study{max-height:0; opacity:0; overflow:hidden; text-align:left; margin-top:0; transition:max-height .55s ease,opacity .4s ease,margin .4s ease}
+.study.open{max-height:2400px; opacity:1; margin-top:26px}
+.study-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.study-card{background:linear-gradient(180deg,var(--surface),var(--bg-2)); border:1px solid var(--line); border-radius:var(--r); padding:20px 22px}
+.study-card.curio{grid-column:1/-1; border-color:var(--line-strong); background:var(--bg-2)}
+.sc-eye{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:11px; display:flex; align-items:center; gap:9px}
+.sc-eye::before{content:""; width:16px; height:1px; background:var(--gold-deep); flex:none}
+.study-card p{font-family:var(--serif); font-size:1.18rem; line-height:1.5; color:var(--text-mute)}
+.study-card.curio p{color:var(--text)}
 .rule{height:1px; background:linear-gradient(90deg,transparent,var(--line-strong),transparent); margin:6px 0 4px}
 
 /* ---------- Tabs ---------- */
@@ -100,7 +114,10 @@ body::after{
 .song:last-child{border-bottom:none}
 .song .n{font-family:var(--mono); font-size:11px; color:var(--gold-deep); flex:none; width:22px}
 .song .name{font-family:var(--serif); font-size:1.28rem; font-weight:500; color:var(--text); flex:1; line-height:1.25}
-.song .who{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-mute); flex:none; text-align:right}
+.song .who{flex:none; display:inline-flex; align-items:center; gap:0; font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--line); background:rgba(228,201,142,.05); border-radius:999px; padding:5px 13px}
+.song .who .wl{color:var(--gold-soft)}
+.song .who .wn{color:var(--gold); font-weight:500}
+.song .who .wn::before{content:"·"; color:var(--gold-deep); margin:0 7px}
 
 /* tags ensaio */
 .tags{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
@@ -166,8 +183,9 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
   .datechip .d{font-size:1.6rem}
   .meta-row{flex-direction:column; gap:2px}
   .meta-row .lbl{width:auto}
-  .song{flex-wrap:wrap; gap:6px 14px}
-  .song .who{width:100%; text-align:left; padding-left:36px}
+  .song{flex-wrap:wrap; gap:8px 14px}
+  .song .who{margin-left:36px}
+  .study-grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 :focus-visible{outline:2px solid var(--gold); outline-offset:2px; border-radius:4px}
@@ -191,6 +209,15 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
     <p class="verse" id="verseText"></p>
     <div class="verse-ref" id="verseRef"></div>
     <div class="verse-date" id="verseDate"></div>
+    <button class="verse-more" id="verseMore" aria-expanded="false">Saber mais sobre este versículo <span class="chev">→</span></button>
+    <div class="study" id="study">
+      <div class="study-grid">
+        <div class="study-card"><div class="sc-eye">Para o ministro de louvor</div><p id="st-m"></p></div>
+        <div class="study-card"><div class="sc-eye">Para a mulher</div><p id="st-w"></p></div>
+        <div class="study-card"><div class="sc-eye">Para o homem</div><p id="st-h"></p></div>
+        <div class="study-card curio"><div class="sc-eye">Palavra-chave &amp; curiosidade</div><p id="st-c"></p></div>
+      </div>
+    </div>
   </section>
 
   <div class="rule"></div>
@@ -277,46 +304,206 @@ const PLANILHA_URL = "";
 
 /* ---------- Versículos (um por dia, rotativo) ---------- */
 const VERSES = [
-  {t:"Deus é Espírito, e é necessário que os seus adoradores o adorem em espírito e em verdade.", r:"João 4.24"},
-  {t:"Cantai ao Senhor um cântico novo, cantai ao Senhor toda a terra.", r:"Salmos 96.1"},
-  {t:"Tudo quanto tem fôlego louve ao Senhor.", r:"Salmos 150.6"},
-  {t:"Louvarei ao Senhor durante a minha vida; cantarei louvores ao meu Deus enquanto eu viver.", r:"Salmos 146.2"},
-  {t:"Servi ao Senhor com alegria; apresentai-vos a ele com cântico.", r:"Salmos 100.2"},
-  {t:"Aquietai-vos e sabei que eu sou Deus.", r:"Salmos 46.10"},
-  {t:"A minha alma engrandece ao Senhor, e o meu espírito se alegra em Deus, meu Salvador.", r:"Lucas 1.46-47"},
-  {t:"Grande é o Senhor e mui digno de ser louvado.", r:"Salmos 145.3"},
-  {t:"O Senhor é a minha força e o meu cântico; ele se tornou a minha salvação.", r:"Êxodo 15.2"},
-  {t:"Buscai primeiro o reino de Deus, e a sua justiça, e todas estas coisas vos serão acrescentadas.", r:"Mateus 6.33"},
-  {t:"Entregue o seu caminho ao Senhor; confie nele, e ele agirá.", r:"Salmos 37.5"},
-  {t:"O Senhor é o meu pastor; nada me faltará.", r:"Salmos 23.1"},
-  {t:"Deleita-te no Senhor, e ele satisfará os desejos do teu coração.", r:"Salmos 37.4"},
-  {t:"Achegai-vos a Deus, e ele se achegará a vós.", r:"Tiago 4.8"},
-  {t:"Tudo posso naquele que me fortalece.", r:"Filipenses 4.13"},
-  {t:"O choro pode durar uma noite, mas a alegria vem pela manhã.", r:"Salmos 30.5"},
-  {t:"Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.", r:"Salmos 118.24"},
-  {t:"Bendize, ó minha alma, ao Senhor, e não te esqueças de nenhum dos seus benefícios.", r:"Salmos 103.2"},
-  {t:"Provai e vede que o Senhor é bom.", r:"Salmos 34.8"},
-  {t:"Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento.", r:"Provérbios 3.5"},
-  {t:"A alegria do Senhor é a vossa força.", r:"Neemias 8.10"},
-  {t:"Os que esperam no Senhor renovarão as suas forças.", r:"Isaías 40.31"},
-  {t:"Se o Senhor não edificar a casa, em vão trabalham os que a edificam.", r:"Salmos 127.1"},
-  {t:"Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho.", r:"Salmos 119.105"},
-  {t:"Cantarei ao Senhor enquanto eu viver.", r:"Salmos 104.33"},
-  {t:"Louvai ao Senhor, porque ele é bom; porque a sua misericórdia dura para sempre.", r:"Salmos 136.1"},
-  {t:"Dai graças em tudo, porque esta é a vontade de Deus em Cristo Jesus para convosco.", r:"1 Tessalonicenses 5.18"},
-  {t:"A palavra de Cristo habite ricamente em vós, cantando com graça no vosso coração ao Senhor.", r:"Colossenses 3.16"},
-  {t:"Como é bom e agradável viverem unidos os irmãos.", r:"Salmos 133.1"},
-  {t:"Não a nós, Senhor, não a nós, mas ao teu nome dá glória.", r:"Salmos 115.1"},
-  {t:"O Senhor é a minha luz e a minha salvação; a quem temerei?", r:"Salmos 27.1"},
-  {t:"Achei o meu descanso somente em Deus; dele vem a minha salvação.", r:"Salmos 62.1"},
-  {t:"Ainda que a figueira não floresça, eu me alegrarei no Senhor.", r:"Habacuque 3.17-18"},
-  {t:"Levantarei os meus olhos para os montes; de onde me vem o socorro.", r:"Salmos 121.1"},
-  {t:"Ensina-nos a contar os nossos dias, para que alcancemos coração sábio.", r:"Salmos 90.12"},
-  {t:"O justo florescerá como a palmeira; crescerá como o cedro no Líbano.", r:"Salmos 92.12"},
-  {t:"Sacrifícios a Deus são o espírito quebrantado; a um coração contrito não desprezarás.", r:"Salmos 51.17"},
-  {t:"Achegai-vos a mim, todos os que estais cansados, e eu vos aliviarei.", r:"Mateus 11.28"},
-  {t:"Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia.", r:"Salmos 46.1"},
-  {t:"Que darei eu ao Senhor por todos os benefícios que me tem feito.", r:"Salmos 116.12"},
+{t:"Deus é Espírito, e é necessário que os seus adoradores o adorem em espírito e em verdade.",r:"João 4.24",
+ m:"Lembre à igreja que adoração não é talento no palco, e sim coração verdadeiro; conduza as pessoas a virem como são, sem máscara.",
+ w:"Adore em espírito e verdade também em casa e no trabalho — sua vida diante de Deus vale mais que sua aparência diante das pessoas.",
+ h:"Verdade não combina com fingimento: seja o mesmo homem em casa, no trabalho e na igreja. Adorar de verdade é viver sem duas caras.",
+ c:"Adorar no grego é proskyneō — curvar-se em reverência, como quem beija a mão do rei. Espírito (pneuma) e verdade (alētheia): a adoração nasce no joelho do coração, não no microfone."},
+{t:"Cantai ao Senhor um cântico novo, cantai ao Senhor toda a terra.",r:"Salmos 96.1",
+ m:"Puxe um cântico novo: não só repertório inédito, mas gratidão fresca pelo que Deus fez nesta semana na vida da igreja.",
+ w:"As misericórdias se renovam a cada manhã; comece o dia com um cântico novo em vez das queixas de ontem.",
+ h:"Homem que só reclama vive preso no passado. Levante, agradeça e recomece — Deus não terminou a sua história.",
+ c:"Cântico novo é shir chadash. A Escritura repete esse convite: adoração não é museu do passado, é vida que se renova."},
+{t:"Tudo quanto tem fôlego louve ao Senhor.",r:"Salmos 150.6",
+ m:"Se respira, adora. Encoraje até os tímidos e os que só cantam no chuveiro — o louvor é de todos, não do time do palco.",
+ w:"Antes de gastar o fôlego suspirando pelos problemas, use-o para louvar; o mesmo ar que reclama pode adorar.",
+ h:"Força de homem não é só músculo; é usar o fôlego que Deus deu para o bem, para a família e para louvar, não para brigar.",
+ c:"Fôlego é neshamah — o mesmo sopro que Deus soprou em Adão (Gênesis 2.7). Cada respiração é empréstimo de Deus; devolvê-la em louvor é justiça."},
+{t:"Louvarei ao Senhor durante a minha vida; cantarei louvores ao meu Deus enquanto eu viver.",r:"Salmos 146.2",
+ m:"Louvor não é fase nem hype: modele constância. A congregação aprende mais pela sua fidelidade semanal do que pelo seu solo.",
+ w:"Faça do louvor um hábito de vida, não de crise: mulher que louva na rotina segura a casa nas tempestades.",
+ h:"Compromisso de homem se mede no longo prazo. Seja fiel a Deus enquanto viver, não só quando der emoção.",
+ c:"O verbo é halal — a raiz de aleluia. O Salmo abre e fecha com Hallelu-Yah (louvai ao Senhor). Aqui louvor é ordem e alegria ao mesmo tempo."},
+{t:"Servi ao Senhor com alegria; apresentai-vos a ele com cântico.",r:"Salmos 100.2",
+ m:"Sirva com alegria, não com peso. Um ministro amargurado contamina a equipe; um alegre abre o céu na congregação.",
+ w:"Servir a família e o trabalho com alegria transforma obrigação em adoração — o mesmo prato lavado com amor vira culto.",
+ h:"Trabalhar duro é de homem, mas trabalhar reclamando é desperdício. Sirva com alegria e a sua casa respira paz.",
+ c:"Servi é avad, a mesma palavra para trabalhar e adorar. Para o hebreu, trabalho e adoração eram a mesma entrega — não havia sagrado e secular separados."},
+{t:"Aquietai-vos e sabei que eu sou Deus.",r:"Salmos 46.10",
+ m:"Nem todo momento pede música alta. Ensine à igreja o valor do silêncio: há adoração que só acontece quando calamos.",
+ w:"No meio das mil tarefas, pare. Você não precisa segurar o mundo — Ele é Deus, você não. Descanse nisso.",
+ h:"Controle não é força; às vezes a maior coragem é parar de resolver tudo no braço e confiar que Deus é Deus.",
+ c:"Aquietai-vos é raphah — afrouxai, larguem as mãos. Não é apenas silêncio: é soltar o controle e deixar Deus ser Deus."},
+{t:"A minha alma engrandece ao Senhor, e o meu espírito se alegra em Deus, meu Salvador.",r:"Lucas 1.46-47",
+ m:"Como Maria, engrandeça a Deus e não a si mesmo. O sucesso do louvor é a congregação sair falando de Deus, não do músico.",
+ w:"Maria era jovem, simples e chamada para algo gigante. Sua vida também é usada por Deus, mesmo quando ninguém aplaude.",
+ h:"Grandeza de verdade é reconhecer quem é maior. Homem humilde que engrandece a Deus é homem que Deus levanta.",
+ c:"Este é o Magnificat — do latim engrandece. É um eco do cântico de Ana (1 Samuel 2): duas mulheres improváveis louvando por promessas impossíveis."},
+{t:"Grande é o Senhor e mui digno de ser louvado.",r:"Salmos 145.3",
+ m:"Enalteça a grandeza de Deus com palavras entre as canções; a congregação louva mais quando enxerga quem está adorando.",
+ w:"Quando o problema parecer grande demais, lembre: Ele é maior. Meça a montanha pelo tamanho do seu Deus.",
+ h:"Homem se curva diante do que é maior. Reconhecer a grandeza de Deus não te diminui — te posiciona.",
+ c:"O Salmo 145 é um acróstico: cada versículo começa por uma letra do alfabeto hebraico, em ordem. Davi louvou de A a Z — a grandeza de Deus não cabe numa letra só."},
+{t:"O Senhor é a minha força e o meu cântico; ele se tornou a minha salvação.",r:"Êxodo 15.2",
+ m:"Sua força para ministrar vem d'Ele, não da sua técnica. Nos dias sem voz e sem ânimo, Ele mesmo é o cântico.",
+ w:"Quando faltar força, não é preguiça — é humanidade. Deixe Deus ser a sua força e o seu cântico no cansaço.",
+ h:"Homem forte não é o que nunca cai; é o que sabe de onde tira a força. A sua vem do Senhor, não do orgulho.",
+ c:"Este é o Cântico do Mar — o primeiro louvor registrado de Israel, entoado após atravessarem o mar. A liberdade nasceu música."},
+{t:"Buscai primeiro o reino de Deus, e a sua justiça, e todas estas coisas vos serão acrescentadas.",r:"Mateus 6.33",
+ m:"Cuide primeiro da presença, depois da produção. Equipe que busca o Reino antes do show colhe o resto por acréscimo.",
+ w:"Antes da agenda, dos filhos e da empresa, busque o Reino; a mulher que prioriza Deus vê o resto se organizar.",
+ h:"Provedor sábio busca Deus primeiro. Corra atrás do sustento, sim — mas ajoelhe antes de sair para a batalha.",
+ c:"Buscai é zēteō no presente contínuo: continuem buscando. Não é uma busca única, é a direção permanente da vida."},
+{t:"Entregue o seu caminho ao Senhor; confie nele, e ele agirá.",r:"Salmos 37.5",
+ m:"Entregue a escala, o repertório e as frustrações do ministério a Deus; planeje com excelência, mas confie o resultado a Ele.",
+ w:"Você não precisa segurar tudo. Role sobre Deus o peso do casamento, dos filhos e do trabalho — Ele age enquanto você descansa.",
+ h:"Homem carrega responsabilidade, mas não foi feito para carregar sozinho. Entregue o caminho a Deus e siga trabalhando em paz.",
+ c:"Entregue vem de galal — rolar. A imagem é literal: role o seu fardo dos seus ombros para os de Deus, como uma pedra pesada."},
+{t:"O Senhor é o meu pastor; nada me faltará.",r:"Salmos 23.1",
+ m:"Ministre como quem já é cuidado. Você conduz ovelhas cansadas — lembre-as de que há um Pastor antes de ser um líder.",
+ w:"Nas contas apertadas e nas incertezas, descanse: há um Pastor cuidando do rebanho. Nada essencial vai faltar.",
+ h:"Homem gosta de prover, mas o Provedor maior é Deus. Trabalhe firme sabendo que o Pastor supre onde a sua força não alcança.",
+ c:"Davi era pastor de ovelhas antes de ser rei. Ele não teorizou: escreveu o que viveu no campo, guiando o rebanho por vales reais."},
+{t:"Deleita-te no Senhor, e ele satisfará os desejos do teu coração.",r:"Salmos 37.4",
+ m:"O maior desejo do adorador deve ser o próprio Deus. Ensine à igreja a desejar a presença, não só as bênçãos.",
+ w:"Quando você se deleita em Deus, Ele reorganiza os seus desejos — e passa a querer o que é bom para você e para a sua família.",
+ h:"Homem realizado não é o que tem tudo, é o que se deleita em Deus. Ache prazer n'Ele e o resto encontra o lugar certo.",
+ c:"Deleita-te é anag — ter prazer profundo, quase sensorial. Deus não pede obrigação fria; convida a um prazer real n'Ele."},
+{t:"Achegai-vos a Deus, e ele se achegará a vós.",r:"Tiago 4.8",
+ m:"Antes de puxar a igreja para perto de Deus, chegue você primeiro. Ninguém leva a congregação aonde não está indo.",
+ w:"O primeiro passo é seu. Deus responde a quem se aproxima — reserve um tempo só com Ele antes de servir os outros.",
+ h:"Iniciativa é de homem. Não espere sentir vontade: dê o primeiro passo em direção a Deus e Ele vem ao seu encontro.",
+ c:"Achegar-se evoca o sacerdote entrando no santuário. Tiago aplica isso a todos: agora qualquer um pode se aproximar de Deus — e Ele corresponde."},
+{t:"Tudo posso naquele que me fortalece.",r:"Filipenses 4.13",
+ m:"Esse tudo inclui contentar-se com pouco público e pouca estrutura. A força de Cristo sustenta tanto no auge quanto na escassez.",
+ w:"Não é consigo tudo sozinha; é posso tudo n'Ele. A força para a maternidade, o trabalho e o casamento vem d'Ele.",
+ h:"Não é frase de academia — é confiança em Cristo. O homem que se apoia n'Ele aguenta o que sozinho não aguentaria.",
+ c:"Paulo escreveu isto preso, aprendendo a se contentar com muito e com pouco. Fortalece é endynamoō — Deus coloca força dentro, não só ao redor."},
+{t:"O choro pode durar uma noite, mas a alegria vem pela manhã.",r:"Salmos 30.5",
+ m:"Conduza a igreja tanto no lamento quanto na esperança. Há espaço para chorar no louvor — e certeza de que a manhã chega.",
+ w:"A noite de lágrimas não é o fim da história. Segure firme: para quem confia em Deus, sempre amanhece.",
+ h:"Homem também chora — e não há vergonha nisso. O forte é o que atravessa a noite sem desistir, esperando a manhã.",
+ c:"Alegria aqui é rinnah — um grito de júbilo, não um sorriso discreto. A manhã de Deus não traz alívio tímido, traz festa."},
+{t:"Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.",r:"Salmos 118.24",
+ m:"Comece o culto lembrando que o próprio dia é presente de Deus. A alegria não depende de a agenda dar certo.",
+ w:"Antes de listar o que falta no dia, agradeça o dia. Ele foi feito por Deus, com propósito, inclusive para você.",
+ h:"Homem produtivo às vezes esquece de viver o dia. Este foi feito por Deus — trabalhe nele, mas também se alegre nele.",
+ c:"O Salmo 118 faz parte do Hallel, cantado na Páscoa judaica. Foi possivelmente um dos últimos cânticos que Jesus entoou com os discípulos."},
+{t:"Bendize, ó minha alma, ao Senhor, e não te esqueças de nenhum dos seus benefícios.",r:"Salmos 103.2",
+ m:"Combata a memória curta da congregação: relembre nos cultos o que Deus já fez. Gratidão é adubo do louvor.",
+ w:"Nos dias difíceis, faça uma lista dos benefícios de Deus. Lembrar do que Ele fez é remédio para o coração ansioso.",
+ h:"Homem esquece rápido a bênção e lembra rápido a falta. Force a memória do bem: conte o que Deus já fez por você.",
+ c:"Davi conversa consigo mesmo: bendize, ó minha alma. Alma é nefesh — todo o seu ser. Às vezes é preciso ordenar ao próprio coração que louve."},
+{t:"Provai e vede que o Senhor é bom.",r:"Salmos 34.8",
+ m:"Louvor é convite, não teoria. Crie momentos em que as pessoas experimentem a bondade de Deus, não só ouçam sobre ela.",
+ w:"Fé se prova vivendo. Dê o passo, confie, e você mesma vai ver — na prática, na sua casa — que Deus é bom.",
+ h:"Homem prático gosta de testar. Então teste Deus na obediência: prove, e verá que Ele é bom no que promete.",
+ c:"Provai é ta'am — saborear, como quem experimenta a comida. Deus não pede fé cega; convida a experimentar e comprovar a Sua bondade."},
+{t:"Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento.",r:"Provérbios 3.5",
+ m:"Planeje o culto com sabedoria, mas não confie no plano — confie em Deus. Deixe espaço para Ele mudar a rota.",
+ w:"Nem tudo você vai entender no casamento, nos filhos ou no trabalho. Confie mesmo sem enxergar o próximo passo.",
+ h:"Homem confia demais na própria cabeça. Sabedoria é reconhecer o limite do seu entendimento e apoiar-se em Deus.",
+ c:"Confia é batach — apoiar todo o peso, deitar-se seguro. Não é ter opinião sobre Deus; é jogar-se n'Ele sem plano B."},
+{t:"A alegria do Senhor é a vossa força.",r:"Neemias 8.10",
+ m:"Nos ensaios pesados e nas crises da equipe, resgate a alegria em Deus: ela sustenta o ministério quando a força humana acaba.",
+ w:"Sua força para os dias longos não vem do café, vem da alegria no Senhor. Guarde essa fonte com cuidado.",
+ h:"Homem cansado busca energia em muita coisa errada. A força que dura nasce da alegria em Deus, não da adrenalina.",
+ c:"Esse verso foi dito ao povo que chorava ao ouvir a Lei depois do exílio. Alegria é chedvah, palavra rara: o consolo veio bem no momento do luto."},
+{t:"Os que esperam no Senhor renovarão as suas forças.",r:"Isaías 40.31",
+ m:"Ministério esgota; a renovação vem na espera, não na correria. Ensine a equipe a descansar em Deus antes de servir.",
+ w:"Esperar não é ficar parada — é confiar enquanto age. Nessa espera ativa, Deus troca o seu cansaço por força nova.",
+ h:"Homem odeia esperar, mas a força se renova justamente aí. Aguardar em Deus é sinal de maturidade, não de fraqueza.",
+ c:"Esperar é qavah — como fios que se entrelaçam formando uma corda forte. A espera em Deus não enfraquece: trança força nova."},
+{t:"Se o Senhor não edificar a casa, em vão trabalham os que a edificam.",r:"Salmos 127.1",
+ m:"Construa o ministério com Deus no centro; sem Ele, os melhores arranjos e estruturas viram esforço vazio.",
+ w:"Você pode caprichar na casa e na carreira, mas convide Deus para a obra: sem Ele, o esforço não sustenta.",
+ h:"Homem gosta de construir. Mas antes de erguer casa, empresa e família, entregue a planta a Deus — Ele é o mestre de obras.",
+ c:"É um Cântico dos Degraus, entoado por peregrinos subindo a Jerusalém, ligado a Salomão, que construiu o Templo. Quem mais construiu sabia: sem Deus, é em vão."},
+{t:"Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho.",r:"Salmos 119.105",
+ m:"Encha o repertório e as ministrações de Palavra. A canção emociona por um instante; a Palavra ilumina o caminho todo.",
+ w:"Nas decisões da casa e do trabalho, deixe a Palavra iluminar o próximo passo — nem sempre o caminho todo, mas sempre o passo seguinte.",
+ h:"Homem quer ver longe; Deus ilumina um passo por vez. Confie na lâmpada da Palavra e ande, mesmo sem enxergar o fim.",
+ c:"A lâmpada era uma candeia de azeite: iluminava só um passo à frente. O Salmo 119 é o maior da Bíblia e um acróstico com as 22 letras hebraicas — inteiro sobre a Palavra."},
+{t:"Cantarei ao Senhor enquanto eu viver.",r:"Salmos 104.33",
+ m:"Faça do louvor um estilo de vida, não um evento de domingo. A congregação canta a semana toda quando o líder também canta.",
+ w:"Cante em casa, no carro, na correria. O louvor cotidiano molda o ambiente da sua família mais do que você imagina.",
+ h:"Homem não precisa ter voz bonita para louvar. Cante para Deus a vida inteira — Ele ouve o coração, não o tom.",
+ c:"O Salmo 104 é um grande hino à criação — céu, mar, montes, animais. O salmista olha a natureza e não consegue calar: canta enquanto vive."},
+{t:"Louvai ao Senhor, porque ele é bom; porque a sua misericórdia dura para sempre.",r:"Salmos 136.1",
+ m:"Use o refrão. Este salmo repete para sempre 26 vezes — a repetição no louvor não é preguiça, é fixar a verdade no coração.",
+ w:"Quando duvidar do amor de Deus, repita: sua misericórdia dura para sempre. Verdade repetida acalma o coração.",
+ h:"Homem esquece que é amado por Deus. Grave isto: a misericórdia d'Ele não tem prazo de validade, mesmo nos seus erros.",
+ c:"Misericórdia é chesed — o amor leal da aliança, que não desiste. Este é o Grande Hallel, cantado em resposta: o povo respondia para sempre a cada frase."},
+{t:"Dai graças em tudo, porque esta é a vontade de Deus em Cristo Jesus para convosco.",r:"1 Tessalonicenses 5.18",
+ m:"Modele gratidão mesmo no som que falhou e na igreja vazia. Um ministro grato ensina mais que dez sermões sobre fé.",
+ w:"Em tudo, não por tudo. Nem tudo é bom, mas em toda situação há motivo de gratidão — procure e você acha.",
+ h:"Homem reclamão cansa a casa. Treine agradecer no meio do problema: gratidão é decisão, não sentimento.",
+ c:"Dar graças é eucharisteō — raiz da palavra eucaristia. A gratidão está no coração da adoração cristã desde o começo."},
+{t:"A palavra de Cristo habite ricamente em vós, cantando com graça no vosso coração ao Senhor.",r:"Colossenses 3.16",
+ m:"Escolha canções cheias de Palavra: elas discipulam. A igreja acaba crendo naquilo que canta a semana inteira.",
+ w:"Encha a casa de boa música e de Palavra. O que toca no ambiente educa o coração dos filhos sem eles perceberem.",
+ h:"Homem que canta a verdade a guarda melhor. Deixe a Palavra morar em você e ela vem à tona na hora certa.",
+ c:"Paulo cita três palavras gregas para música: psalmois, hymnois e ōdais — salmos, hinos e cânticos espirituais. Desde o início a igreja adorava com variedade, não com um estilo só."},
+{t:"Como é bom e agradável viverem unidos os irmãos.",r:"Salmos 133.1",
+ m:"A unidade da equipe soa antes de qualquer nota. Cuide das relações nos bastidores — o público sente a comunhão do grupo.",
+ w:"Unidade em casa é bênção que Deus honra. Vale a pena ceder o orgulho para manter a paz entre os seus.",
+ h:"Homem de verdade constrói pontes, não muros. Busque a unidade na família e na igreja, mesmo quando custa ao ego.",
+ c:"Em hebraico começa hinneh mah tov — cantado até hoje em festas judaicas como Hine Ma Tov. É um cântico de peregrinação, entoado por quem subia junto a Jerusalém."},
+{t:"Não a nós, Senhor, não a nós, mas ao teu nome dá glória.",r:"Salmos 115.1",
+ m:"Grave no coração da equipe: o palco não é vitrine. Toda glória do culto pertence a Deus, não ao talento do músico.",
+ w:"Nos elogios que receber pelo lar, pela carreira ou pelos filhos, devolva a glória a Deus — Ele é a fonte de tudo.",
+ h:"Homem gosta de crédito, mas maturidade é apontar para Deus. Faça bem-feito e deixe a glória com quem merece.",
+ c:"Glória é kavod — literalmente peso. Dar glória a Deus é reconhecer que Ele é quem tem peso de verdade; nós somos leves demais para levar esse crédito."},
+{t:"O Senhor é a minha luz e a minha salvação; a quem temerei?",r:"Salmos 27.1",
+ m:"Antes de acalmar o medo da equipe no palco, pregue a si mesmo: se Deus é a luz, o nervosismo perde o poder.",
+ w:"Diante do medo pelos filhos, pelo futuro ou pela saúde, pergunte com Davi: a quem temerei? Deus é maior que o medo.",
+ h:"Coragem de homem não é ausência de medo; é temer a Deus mais do que qualquer ameaça. Com Ele por luz, o resto é sombra.",
+ c:"Salvação é yeshuah — a mesma raiz do nome Yeshua (Jesus). Ao dizer o Senhor é minha salvação, Davi profetiza sem saber o nome do Salvador."},
+{t:"Achei o meu descanso somente em Deus; dele vem a minha salvação.",r:"Salmos 62.1",
+ m:"O descanso do ministro não vem do sucesso do culto, e sim de Deus. Sirva a partir do descanso, não em busca dele.",
+ w:"Você não precisa se provar para todos. Só em Deus há descanso real — não na aprovação da família ou do trabalho.",
+ h:"Homem quer resolver tudo no braço e vive esgotado. Aprenda: o verdadeiro descanso não se conquista, se recebe de Deus.",
+ c:"A palavra somente (ak) se repete no salmo como um martelo: só Deus, só n'Ele, só d'Ele. E descanso é dumiyah — um silêncio confiante da alma."},
+{t:"Ainda que a figueira não floresça, eu me alegrarei no Senhor.",r:"Habacuque 3.17-18",
+ m:"Ensine uma adoração que não depende de circunstância. Há um louvor que nasce justamente quando tudo parece falhar.",
+ w:"Mesmo com a conta no vermelho e os planos frustrados, você pode se alegrar no Senhor. A alegria d'Ele não depende da colheita.",
+ h:"Homem se abala quando o sustento falha. Habacuque escolheu: mesmo sem colheita, alegrar-se em Deus. Isso é fé de verdade.",
+ c:"Este capítulo é uma oração que termina para o mestre de canto, com instrumentos de corda. Ou seja: era para ser cantado — louvor em plena crise."},
+{t:"Levantarei os meus olhos para os montes; de onde me vem o socorro.",r:"Salmos 121.1",
+ m:"Aponte os olhos da igreja para o alto, não para os problemas. O socorro não vem do palco, vem d'Aquele que fez os céus.",
+ w:"Quando o peso baixar a cabeça, levante os olhos. O seu socorro não vem da sua força, vem do Senhor que não dorme.",
+ h:"Homem tenta resolver olhando só para o problema. Levante a cabeça: a ajuda vem de cima, de quem fez o céu e a terra.",
+ c:"É um cântico de peregrinação. Ao subir para Jerusalém, os montes podiam esconder perigos — mas o peregrino olha além deles, para o Deus que os criou."},
+{t:"Ensina-nos a contar os nossos dias, para que alcancemos coração sábio.",r:"Salmos 90.12",
+ m:"O tempo no ministério é curto e precioso. Invista nas pessoas, não só nos eventos — dias contados pedem prioridades certas.",
+ w:"A vida passa rápido entre tarefas. Contar os dias é escolher bem onde gastar o tempo com a família e com o que importa.",
+ h:"Homem se acha eterno até bater a idade. Sabedoria é lembrar que os dias são contados e viver cada um com propósito.",
+ c:"É atribuído a Moisés — provavelmente o salmo mais antigo. Quem viu uma geração inteira morrer no deserto sabia, como ninguém, o valor de contar os dias."},
+{t:"O justo florescerá como a palmeira; crescerá como o cedro no Líbano.",r:"Salmos 92.12",
+ m:"Crescimento espiritual é lento e profundo como o do cedro. Não busque hype passageiro na equipe; cultive raízes.",
+ w:"A palmeira dá fruto até na velhice e no deserto. Sua vida com Deus tende a frutificar mais com o tempo, não menos.",
+ h:"Homem quer resultado rápido; Deus forma como cedro, com raiz funda. Firmeza de caráter leva tempo — persista.",
+ c:"O Salmo 92 tem o título Cântico para o dia de sábado. A palmeira (tamar) dá frutos por décadas e o cedro dura séculos: imagens de uma justiça que atravessa o tempo."},
+{t:"Sacrifícios a Deus são o espírito quebrantado; a um coração contrito não desprezarás.",r:"Salmos 51.17",
+ m:"Deus se agrada mais do coração quebrantado da equipe do que da execução perfeita. Ministério nasce de gente rendida.",
+ w:"Você não precisa chegar a Deus arrumada. Ele valoriza o coração honesto e humilde acima da aparência de tudo em ordem.",
+ h:"Homem tem dificuldade de admitir erro. Mas o que Deus não despreza é justamente o orgulho quebrado e o coração humilde.",
+ c:"Davi escreveu isto após o seu maior pecado, com Bate-Seba. O rei mais poderoso descobriu que Deus não quer performance, quer arrependimento verdadeiro."},
+{t:"Vinde a mim, todos os que estais cansados, e eu vos aliviarei.",r:"Mateus 11.28",
+ m:"Antes de servir, venha e descanse em Jesus. Ministro exausto conduz ninguém; abastecido, transborda para a igreja.",
+ w:"Você carrega muitos papéis e cansa. O convite é pessoal: venha a Jesus como está e receba alívio real, não só uma pausa.",
+ h:"Homem tem orgulho de aguentar tudo calado. Jesus oferece algo que academia nenhuma dá: descanso para a alma. Aceite.",
+ c:"Aliviar é anapauō — dar repouso. Jesus fala de trocar de jugo: no judaísmo, o ensino de um rabino era seu jugo. Ele oferece o jugo leve — o d'Ele."},
+{t:"Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia.",r:"Salmos 46.1",
+ m:"Nos momentos de crise da igreja, aponte para o Refúgio. O louvor em tempos difíceis lembra a todos onde está a segurança.",
+ w:"Quando a angústia bater, corra para o abrigo certo. Deus não é socorro distante: está bem presente na hora exata.",
+ h:"Homem quer ser a fortaleza da casa — e deve protegê-la. Mas ele mesmo precisa de um refúgio maior: Deus é essa fortaleza.",
+ c:"Este salmo inspirou Martinho Lutero a escrever Castelo Forte é o Nosso Deus, hino da Reforma. Séculos depois, ainda vira canção nas horas de angústia."},
+{t:"Que darei eu ao Senhor por todos os benefícios que me tem feito.",r:"Salmos 116.12",
+ m:"Ensine à igreja a responder à graça com entrega. O louvor é a resposta agradecida a tudo que Deus já fez — não um pagamento.",
+ w:"Diante de tanto que Deus fez por você, a melhor resposta é a vida entregue: ofereça a Ele o seu dia, a casa e o coração.",
+ h:"Homem gosta de quitar dívidas, mas com Deus não dá para pagar — só agradecer com a vida. Viva grato pelo que recebeu de graça.",
+ c:"O verso seguinte responde: tomarei o cálice da salvação. Faz parte do Hallel da Páscoa — possivelmente o cálice que Jesus ergueu na última ceia."},
 ];
 
 function verseOfDay(){
@@ -337,6 +524,12 @@ function firstWordSplit(t){
   document.getElementById('verseRef').textContent=v.r;
   const d=new Date();
   document.getElementById('verseDate').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('st-m').textContent=v.m||'';
+  document.getElementById('st-w').textContent=v.w||'';
+  document.getElementById('st-h').textContent=v.h||'';
+  document.getElementById('st-c').textContent=v.c||'';
+  const vm=document.getElementById('verseMore'), st=document.getElementById('study');
+  vm.addEventListener('click',()=>{const open=st.classList.toggle('open');vm.setAttribute('aria-expanded',open?'true':'false');});
 })();
 
 /* ---------- Dados de exemplo ---------- */
@@ -395,7 +588,7 @@ function renderIgrejas(){
     const past=x._d && x._d<today0() && idx!==ni;
     const songs=(x.louvores||[]).filter(l=>l&&l[0]&&String(l[0]).trim());
     const songHTML=songs.length?('<div class="setlist"><div class="sl-head">Repertório</div>'+
-      songs.map((l,i)=>'<div class="song"><span class="n">'+String(i+1).padStart(2,'0')+'</span><span class="name">'+esc(l[0])+'</span>'+(l[1]?'<span class="who">ministra · '+esc(l[1])+'</span>':'')+'</div>').join('')+'</div>'):'';
+      songs.map((l,i)=>'<div class="song"><span class="n">'+String(i+1).padStart(2,'0')+'</span><span class="name">'+esc(l[0])+'</span>'+(l[1]?'<span class="who"><span class="wl">ministra</span><span class="wn">'+esc(l[1])+'</span></span>':'')+'</div>').join('')+'</div>'):'';
     return '<article class="card'+(idx===ni?' next':'')+(past?' past':'')+'" style="animation-delay:'+(idx*0.05)+'s">'+
       '<div class="card-top">'+chip(x._d)+
         '<div class="card-main">'+(idx===ni?'<span class="badge-next">Próxima</span>':'')+
