@@ -60,18 +60,33 @@ body::after{
 .verse-date .dow{color:var(--gold); text-transform:uppercase; letter-spacing:.24em; font-size:12.5px}
 .verse-date .sep{color:var(--gold-deep); margin:0 9px; opacity:.55}
 .verse-date .dnum{color:var(--text-mute); text-transform:capitalize; letter-spacing:.1em}
-/* estudo do versículo */
-.verse-more{margin-top:24px; position:relative; background:transparent; border:none; cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-deep); display:inline-flex; align-items:center; gap:9px; padding:7px 4px; transition:text-shadow .3s;
-  background-image:linear-gradient(100deg,var(--gold-deep) 0%,var(--gold-deep) 42%,var(--gold) 50%,var(--gold-deep) 58%,var(--gold-deep) 100%);
-  background-size:220% 100%; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-  animation:sheen 6.5s linear infinite;}
-@keyframes sheen{0%{background-position:135% 0}100%{background-position:-35% 0}}
-.verse-more::after{content:""; position:absolute; left:4px; right:4px; bottom:2px; height:1px; background:linear-gradient(90deg,transparent,var(--gold-deep),transparent); transform:scaleX(0); transition:transform .5s ease,opacity .5s; opacity:0}
-.verse-more:hover{-webkit-text-fill-color:var(--gold); text-shadow:0 0 16px rgba(228,201,142,.28)}
-.verse-more:hover::after{transform:scaleX(1); opacity:.85}
-.verse-more .chev{display:inline-block; transition:transform .35s}
-.verse-more:hover .chev{transform:translateX(5px)}
+/* estudo do versículo — botão premium */
+.verse-more{position:relative; margin-top:28px; display:inline-flex; align-items:center; gap:12px; padding:12px 24px; border-radius:999px; cursor:pointer; overflow:hidden; isolation:isolate;
+  font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:var(--gold);
+  background:linear-gradient(180deg,rgba(228,201,142,.09),rgba(228,201,142,.02));
+  border:1px solid var(--line-strong);
+  transition:color .35s, border-color .35s, transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .45s;
+  animation:halo 4.6s ease-in-out infinite;}
+@keyframes halo{0%,100%{box-shadow:0 0 0 0 rgba(228,201,142,0), inset 0 1px 0 rgba(255,255,255,.05)}50%{box-shadow:0 0 24px -6px rgba(228,201,142,.32), inset 0 1px 0 rgba(255,255,255,.05)}}
+/* feixe de luz que atravessa o botão */
+.verse-more::before{content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(100deg,transparent 20%,rgba(228,201,142,.20) 44%,rgba(255,246,222,.42) 50%,rgba(228,201,142,.20) 56%,transparent 80%);
+  background-size:250% 100%; background-repeat:no-repeat;
+  animation:sheen 5.5s cubic-bezier(.45,0,.15,1) infinite;}
+@keyframes sheen{0%{background-position:190% 0}60%,100%{background-position:-90% 0}}
+/* filete dourado que abre no hover */
+.verse-more::after{content:""; position:absolute; left:26%; right:26%; bottom:0; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:.45; transition:left .5s ease,right .5s ease,opacity .4s}
+.verse-more:hover{color:#F8F1DC; border-color:var(--gold-deep); transform:translateY(-2px); animation-play-state:paused;
+  box-shadow:0 12px 32px -14px rgba(228,201,142,.5), 0 0 26px -6px rgba(228,201,142,.32), inset 0 1px 0 rgba(255,255,255,.10)}
+.verse-more:hover::after{left:8%; right:8%; opacity:1}
+.verse-more .chev{display:inline-flex; align-items:center; justify-content:center; width:21px; height:21px; border-radius:50%; border:1px solid var(--line-strong); font-size:11px; line-height:1; flex:none; transition:transform .4s cubic-bezier(.2,.7,.2,1),border-color .35s,background .35s}
+.verse-more:hover .chev{transform:translateX(3px); border-color:var(--gold); background:rgba(228,201,142,.14)}
+/* aberto: recolhe o brilho para o estudo virar o protagonista */
+.verse-more[aria-expanded="true"]{color:var(--gold-soft); border-color:var(--line); animation:none; box-shadow:none}
+.verse-more[aria-expanded="true"]::before{animation:none; opacity:0}
+.verse-more[aria-expanded="true"]::after{opacity:0}
 .verse-more[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.verse-more[aria-expanded="true"]:hover{color:var(--gold); transform:none}
 .study{max-height:0; opacity:0; overflow:hidden; text-align:left; margin-top:0; transition:max-height .55s ease,opacity .4s ease,margin .4s ease}
 .study.open{max-height:4200px; opacity:1; margin-top:26px}
 .study-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
