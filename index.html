@@ -163,6 +163,7 @@ body::after{
 /* Divisão dos louvores */
 .songchip{flex:none; width:74px; text-align:center; border:1px solid var(--line); border-radius:10px; padding:14px 6px; background:var(--bg)}
 .songchip .sn{font-family:var(--serif); font-weight:600; font-size:2rem; line-height:1; color:var(--gold)}
+.daychip .d{font-size:1.5rem; letter-spacing:.03em}
 .songchip .slbl{font-family:var(--mono); font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold-soft); margin-top:7px}
 .dcard .who{display:inline-flex; align-items:center; font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--line); background:rgba(228,201,142,.05); border-radius:999px; padding:5px 13px; margin-top:11px}
 .dcard .who .wl{color:var(--gold-soft)}
@@ -294,6 +295,7 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
     <button class="tab" role="tab" aria-selected="true" data-tab="igrejas">Agenda nas Igrejas</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="agendas">Agenda do Mês</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="ensaios">Ensaios</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="escala">Escala Semanal</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="divisao">Divisão dos Louvores</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="ministerio">O Ministério</button>
   </nav>
@@ -311,6 +313,11 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
   <section class="panel" id="p-ensaios" role="tabpanel">
     <div class="panel-head"><h2>Ensaios</h2><span class="count" id="c-ensaios"></span></div>
     <div class="grid" id="g-ensaios"></div>
+  </section>
+
+  <section class="panel" id="p-escala" role="tabpanel">
+    <div class="panel-head"><h2>Escala Semanal</h2><span class="count" id="c-escala"></span></div>
+    <div class="grid" id="g-escala"></div>
   </section>
 
   <section class="panel" id="p-divisao" role="tabpanel">
@@ -402,6 +409,12 @@ const DEMO={
   ensaios:[
     {data:"08/07/2026",horario:"19:00",vocal:"SIM",instrumento:"NÃO",obs:"Ensaio focado só nas vozes desta semana"},
     {data:"15/07/2026",horario:"19:30",vocal:"SIM",instrumento:"SIM",obs:"Ensaio completo com a banda"},
+  ],
+  escala:[
+    {nome:"Bruna", dia:"Domingo", louvor:"Envolve-me"},
+    {nome:"Raissa", dia:"Segunda-feira", louvor:"Fidelidade"},
+    {nome:"Renan", dia:"Quarta-feira", louvor:"Eu Falo Jesus"},
+    {nome:"Camilly", dia:"Sexta-feira", louvor:"Na Unção de Deus"},
   ],
   divisao:[
     {louvor:"Envolve-me", ministra:"Bruna",
@@ -564,6 +577,37 @@ function renderEnsaios(){
       '</div></article>';
   }).join('');
 }
+/* ---------- Escala Semanal ---------- */
+const DIAS_SEMANA=['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
+const DIAS_ABBR=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+function diaIndex(s){
+  const n=norm(s);
+  for(let i=0;i<DIAS_SEMANA.length;i++){if(n.includes(DIAS_SEMANA[i]))return i;}
+  return 99;
+}
+function withDia(list){
+  return list.map((x,i)=>({...x,_di:diaIndex(x.dia),_i:i}))
+             .sort((a,b)=>(a._di-b._di)||(a._i-b._i));
+}
+function renderEscala(){
+  const list=withDia(STATE.data.escala||[]);
+  const hoje=new Date().getDay();
+  document.getElementById('c-escala').textContent=list.length+(list.length===1?' pessoa':' pessoas');
+  const g=document.getElementById('g-escala');
+  if(!list.length){g.innerHTML=emptyMsg('Escala ainda não definida','Preencha a aba “Escala Semanal” na planilha com o integrante, o dia da semana e o louvor, e a escala aparece aqui.');return;}
+  g.innerHTML=list.map((x,idx)=>{
+    const isHoje=x._di===hoje;
+    const diaLbl=x._di<99?DIAS_ABBR[x._di]:(String(x.dia||'').trim().slice(0,3).toUpperCase()||'—');
+    return '<article class="card'+(isHoje?' next':'')+'" style="animation-delay:'+(idx*0.05)+'s">'+
+      '<div class="card-top"><div class="datechip daychip"><div class="d">'+esc(diaLbl)+'</div><div class="m">semanal</div></div>'+
+        '<div class="card-main">'+(isHoje?'<span class="badge-next">Hoje</span>':'')+
+          '<div class="card-title">'+esc(x.nome||'Integrante')+'</div>'+
+          '<div class="meta">'+row('Dia',x.dia)+row('Louvor',x.louvor)+'</div>'+
+          '<div class="tags"><span class="tag on"><span class="dot"></span>Enviar áudio cantando no WhatsApp</span></div>'+
+        '</div>'+
+      '</div></article>';
+  }).join('');
+}
 function row(lbl,val){if(!val||!String(val).trim())return '';return '<div class="meta-row"><span class="lbl">'+lbl+'</span><span class="val">'+esc(val)+'</span></div>';}
 function rowRaw(lbl,html){if(!html)return '';return '<div class="meta-row"><span class="lbl">'+lbl+'</span><span class="val">'+html+'</span></div>';}
 
@@ -624,7 +668,7 @@ function renderDivisao(){
   }).join('');
 }
 
-function renderAll(){renderIgrejas();renderAgendas();renderEnsaios();renderDivisao();}
+function renderAll(){renderIgrejas();renderAgendas();renderEnsaios();renderEscala();renderDivisao();}
 function emptyMsg(h,p){return '<div class="empty"><h3>'+h+'</h3><p>'+p+'</p></div>';}
 renderAll();
 
@@ -654,18 +698,20 @@ function mapIgreja(r){
 }
 function mapAgenda(r){return {data:r[findKey(r,['data'])],horario:r[findKey(r,['horario','comparecer'])],endereco:r[findKey(r,['endereco','local'])],obs:r[findKey(r,['obs','observ'])]};}
 function mapEnsaio(r){return {data:r[findKey(r,['data'])],horario:r[findKey(r,['horario'])],vocal:r[findKey(r,['vocal'])],instrumento:r[findKey(r,['instrumento'])],obs:r[findKey(r,['obs','observ'])]};}
+function mapEscala(r){return {nome:r[findKey(r,['nome integrante','nome do integrante','integrante','nome'])]||'',dia:r[findKey(r,['dia da semana','dia'])]||'',louvor:r[findKey(r,['louvor','musica','cancao','hino'])]||''};}
 function findVoz(r,digito){const keys=Object.keys(r);const k=keys.find(k=>{const q=norm(k).replace(/[ªº°]/g,'').trim();return /voz/.test(q)&&q.startsWith(digito);});return k?r[k]:'';}
 function mapDivisao(r){return {louvor:r[findKey(r,['louvor','musica','cancao','hino'])]||'',ministra:r[findKey(r,['ministra','quem'])]||'',construcao:r[findKey(r,['construcao','dinamica'])]||'',v1:findVoz(r,'1'),v2:findVoz(r,'2'),v3:findVoz(r,'3'),obs:r[findKey(r,['obs','observ'])]||''};}
-function mapRows(key,rows){rows=(rows||[]).filter(r=>Object.values(r).some(v=>String(v).trim()));if(key==='igrejas')return rows.map(mapIgreja);if(key==='agendas')return rows.map(mapAgenda);if(key==='ensaios')return rows.map(mapEnsaio);if(key==='divisao')return rows.map(mapDivisao);return [];}
+function mapRows(key,rows){rows=(rows||[]).filter(r=>Object.values(r).some(v=>String(v).trim()));if(key==='igrejas')return rows.map(mapIgreja);if(key==='agendas')return rows.map(mapAgenda);if(key==='ensaios')return rows.map(mapEnsaio);if(key==='escala')return rows.map(mapEscala);if(key==='divisao')return rows.map(mapDivisao);return [];}
 
 function parseWorkbook(wb){
-  const out={igrejas:[],agendas:[],ensaios:[],divisao:[]};
+  const out={igrejas:[],agendas:[],ensaios:[],escala:[],divisao:[]};
   wb.SheetNames.forEach(name=>{
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:''});
     const n=norm(name);
     if(!rows.length)return;
     if(n.includes('divis')) out.divisao=mapRows('divisao',rows);
     else if(n.includes('igreja')) out.igrejas=mapRows('igrejas',rows);
+    else if(n.includes('escala')) out.escala=mapRows('escala',rows);
     else if(n.includes('agenda')||n.includes('mes')) out.agendas=mapRows('agendas',rows);
     else if(n.includes('ensaio')) out.ensaios=mapRows('ensaios',rows);
   });
@@ -714,10 +760,10 @@ async function syncFromSheet(silent){
   // 2) fallback: lê aba por aba em CSV
   if(!ok){
     try{
-      const cats={igrejas:['Igrejas'],agendas:['Agendas do Mês','Agendas do Mes','Agenda do Mês','Agendas'],ensaios:['Ensaios']};
-      const d={igrejas:[],agendas:[],ensaios:[]};
+      const cats={igrejas:['Igrejas'],agendas:['Agendas do Mês','Agendas do Mes','Agenda do Mês','Agendas'],ensaios:['Ensaios'],escala:['Escala Semanal','Escala']};
+      const d={igrejas:[],agendas:[],ensaios:[],escala:[]};
       for(const key in cats){for(const nm of cats[key]){const rows=await gvizRows(nm);if(rows&&rows.length){d[key]=mapRows(key,rows);break;}}}
-      if(d.igrejas.length||d.agendas.length||d.ensaios.length||d.divisao.length){STATE.data=d;renderAll();ok=true;}
+      if(d.igrejas.length||d.agendas.length||d.ensaios.length||d.escala.length){STATE.data=d;renderAll();ok=true;}
     }catch(e){}
   }
   syncBtn.disabled=false; syncBtn.textContent=original;
