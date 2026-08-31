@@ -355,6 +355,9 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
 /* ===== PLANILHA FIXA =====
    ID da planilha do Google Sheets usada pelo painel. */
 const SHEET_ID = "17j4TcKjLgH__58ZkN9ViozQGsy7qBnx-Mt9914seD7Y";
+/* A aba "Escala Semanal" vive numa planilha publicada à parte (não faz parte
+   do SHEET_ID acima), então ela é buscada direto pelo link publicado. */
+const ESCALA_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQWt9XabPdhhGPbdXd6w0To1bJGCUGV9J1eZVLRPksLrq7XYsURWNXLvzbow_oOIyNm-yTjONaZjgc/pub?gid=1367342753&single=true&output=csv";
 /* ========================= */
 
 /* ---------- Versículos (um por dia, rotativo) ---------- */
@@ -743,10 +746,43 @@ async function gvizRows(sheetName){
   }catch(e){return null;}
 }
 
+/* Lê um CSV bruto pulando eventuais linhas em branco antes do cabeçalho
+   (planilhas "publicadas na web" às vezes trazem uma linha vazia no topo). */
+function rowsFromCSVText(txt){
+  const wb=XLSX.read(txt,{type:'string'});
+  const sheet=wb.Sheets[wb.SheetNames[0]];
+  const arr=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+  const hIdx=arr.findIndex(row=>row.some(c=>String(c).trim()));
+  if(hIdx<0)return [];
+  const headers=arr[hIdx].map((h,i)=>String(h||'').trim()||('col'+i));
+  const rows=[];
+  for(let i=hIdx+1;i<arr.length;i++){
+    const r=arr[i];
+    if(!r||!r.some(c=>String(c).trim()))continue;
+    const obj={};
+    headers.forEach((h,j)=>{obj[h]=r[j]!=null?r[j]:'';});
+    rows.push(obj);
+  }
+  return rows;
+}
+
+/* Busca a Escala Semanal na sua planilha publicada própria */
+async function fetchEscalaCSV(){
+  try{
+    const sep=ESCALA_CSV_URL.includes('?')?'&':'?';
+    const r=await fetch(ESCALA_CSV_URL+sep+'_='+Date.now(),{cache:'no-store'});
+    if(!r.ok)return null;
+    const txt=await r.text();
+    if(/^\s*<!DOCTYPE|^\s*<html/i.test(txt))return null;
+    const rows=rowsFromCSVText(txt);
+    return rows.length?mapRows('escala',rows):null;
+  }catch(e){return null;}
+}
+
 async function syncFromSheet(silent){
   syncBtn.disabled=true; const original='Sincronizar planilha'; syncBtn.textContent='Sincronizando…';
   let ok=false;
-  // 1) baixa a planilha inteira em .xlsx (respeita os nomes das abas)
+  // 1) baixa a planilha principal inteira em .xlsx (respeita os nomes das abas)
   try{
     const url='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=xlsx&_='+Date.now();
     const r=await fetch(url,{cache:'no-store'});
@@ -754,18 +790,26 @@ async function syncFromSheet(silent){
       const buf=await r.arrayBuffer();
       const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
       const d=parseWorkbook(wb);
-      if(d.igrejas.length||d.agendas.length||d.ensaios.length||d.divisao.length){STATE.data=d;renderAll();ok=true;}
+      if(d.igrejas.length||d.agendas.length||d.ensaios.length||d.divisao.length||d.escala.length){STATE.data=d;ok=true;}
     }
   }catch(e){}
-  // 2) fallback: lê aba por aba em CSV
+  // 2) fallback: lê aba por aba em CSV (mesma planilha principal)
   if(!ok){
     try{
-      const cats={igrejas:['Igrejas'],agendas:['Agendas do Mês','Agendas do Mes','Agenda do Mês','Agendas'],ensaios:['Ensaios'],escala:['Escala Semanal','Escala']};
+      const cats={igrejas:['Igrejas'],agendas:['Agendas do Mês','Agendas do Mes','Agenda do Mês','Agendas'],ensaios:['Ensaios']};
       const d={igrejas:[],agendas:[],ensaios:[],escala:[]};
       for(const key in cats){for(const nm of cats[key]){const rows=await gvizRows(nm);if(rows&&rows.length){d[key]=mapRows(key,rows);break;}}}
-      if(d.igrejas.length||d.agendas.length||d.ensaios.length||d.escala.length){STATE.data=d;renderAll();ok=true;}
+      if(d.igrejas.length||d.agendas.length||d.ensaios.length){STATE.data=d;ok=true;}
     }catch(e){}
   }
+  // 3) Escala Semanal: planilha publicada à parte, busca sempre por conta própria
+  let escalaOk=false;
+  try{
+    const escalaRows=await fetchEscalaCSV();
+    if(escalaRows&&escalaRows.length){STATE.data={...STATE.data,escala:escalaRows};escalaOk=true;}
+  }catch(e){}
+  renderAll();
+  ok=ok||escalaOk;
   syncBtn.disabled=false; syncBtn.textContent=original;
   if(ok){
     const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
