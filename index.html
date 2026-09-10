@@ -254,13 +254,84 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 :focus-visible{outline:2px solid var(--gold); outline-offset:2px; border-radius:4px}
 .sync-btn:disabled{opacity:.55; cursor:default}
+
+/* ---------- Bloqueio por senha ---------- */
+body.locked{overflow:hidden}
+body.locked .wrap{filter:blur(18px) saturate(60%); pointer-events:none; user-select:none}
+#authOverlay{z-index:100}
+#authOverlay .modal{text-align:left}
+.auth-eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:10px}
+.field input[type=password]{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 14px; color:var(--text); font-family:var(--mono); font-size:14px; letter-spacing:.12em}
+.field input[type=password]:focus{outline:none; border-color:var(--gold-deep)}
+
+/* ---------- Cronômetro de prazo ---------- */
+.countdown{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:2px}
+.cd-box{display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:64px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 8px}
+.cd-num{font-family:var(--serif); font-weight:600; font-size:1.9rem; color:var(--gold); line-height:1; font-variant-numeric:tabular-nums}
+.cd-lbl{font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-mute); margin-top:6px}
+.cd-sep{font-family:var(--serif); font-size:1.6rem; color:var(--gold-deep); opacity:.55}
+.countdown.expired .cd-box{border-color:rgba(176,138,122,.5)}
+.countdown.expired .cd-num{color:var(--stone)}
+@media (max-width:620px){
+  .cd-box{min-width:52px; padding:10px 4px}
+  .cd-num{font-size:1.5rem}
+}
 .toast{position:fixed; left:50%; bottom:26px; transform:translate(-50%,20px); z-index:60; max-width:min(520px,92vw); background:linear-gradient(180deg,var(--surface),var(--bg-2)); border:1px solid var(--line-strong); color:var(--text); font-family:var(--sans); font-size:13.5px; line-height:1.5; padding:14px 18px; border-radius:12px; box-shadow:0 20px 50px -20px rgba(0,0,0,.9); opacity:0; pointer-events:none; transition:opacity .35s,transform .35s}
 .toast.show{opacity:1; transform:translate(-50%,0); pointer-events:auto}
 .toast.ok{border-color:rgba(159,176,129,.5)}
 .toast.err{border-color:rgba(176,138,122,.65); cursor:pointer}
 </style>
 </head>
-<body>
+<body class="locked">
+
+<div class="overlay open" id="authOverlay">
+  <div class="modal">
+    <div class="auth-eyebrow">Painel do Ministério</div>
+    <h3>Acesso Restrito</h3>
+    <p class="sub">Digite a senha para abrir o painel.</p>
+    <div class="field">
+      <label for="authPass">Senha</label>
+      <input type="password" id="authPass" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="authSubmit" type="button">Entrar</button>
+    </div>
+    <div class="status" id="authStatus"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var PASS='abba2026';
+  var overlay=document.getElementById('authOverlay');
+  var input=document.getElementById('authPass');
+  var btn=document.getElementById('authSubmit');
+  var status=document.getElementById('authStatus');
+  function unlock(){
+    document.body.classList.remove('locked');
+    overlay.classList.remove('open');
+  }
+  function tryLogin(){
+    if(input.value===PASS){
+      try{sessionStorage.setItem('abbaAuthOk','1');}catch(e){}
+      status.className='status ok';
+      status.textContent='Acesso liberado ✓';
+      setTimeout(unlock,200);
+    }else{
+      status.className='status err';
+      status.textContent='Senha incorreta. Tente novamente.';
+      input.value='';
+      input.focus();
+    }
+  }
+  var already=false;
+  try{already=sessionStorage.getItem('abbaAuthOk')==='1';}catch(e){}
+  if(already){ unlock(); }
+  else if(input){ setTimeout(function(){input.focus();},50); }
+  if(btn) btn.addEventListener('click',tryLogin);
+  if(input) input.addEventListener('keydown',function(e){ if(e.key==='Enter') tryLogin(); });
+})();
+</script>
+
 <div class="wrap">
 
   <div class="topbar">
@@ -297,6 +368,7 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
     <button class="tab" role="tab" aria-selected="false" data-tab="ensaios">Ensaios</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="escala">Escala Semanal</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="divisao">Divisão dos Louvores</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="prazos">Prazos &amp; Pendências</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="ministerio">O Ministério</button>
   </nav>
 
@@ -323,6 +395,42 @@ footer .src{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-
   <section class="panel" id="p-divisao" role="tabpanel">
     <div class="panel-head"><h2>Divisão dos Louvores</h2><span class="count" id="c-divisao"></span></div>
     <div class="grid" id="g-divisao"></div>
+  </section>
+
+  <section class="panel" id="p-prazos" role="tabpanel">
+    <div class="panel-head"><h2>Prazos &amp; Pendências</h2><span class="count" id="c-prazos">1 pendência</span></div>
+    <div class="grid" id="g-prazos">
+      <article class="card next">
+        <div class="card-top">
+          <div class="datechip">
+            <div class="d">11</div>
+            <div class="m">Set</div>
+            <div class="y">18h</div>
+          </div>
+          <div class="card-main">
+            <span class="badge-next">Pendente</span>
+            <div class="card-title">Criar PDF: letra com repetição e versão numérica de repetição</div>
+            <div class="meta">
+              <div class="meta-row"><span class="lbl">Responsável</span><span class="val">João</span></div>
+              <div class="meta-row"><span class="lbl">Prazo</span><span class="val mono">11/09 até às 18h00</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="dsection">
+          <div class="sl-head">Cronômetro</div>
+          <div class="countdown" id="prazoCountdown">
+            <div class="cd-box"><span class="cd-num" id="cd-d">00</span><span class="cd-lbl">dias</span></div>
+            <div class="cd-sep">:</div>
+            <div class="cd-box"><span class="cd-num" id="cd-h">00</span><span class="cd-lbl">horas</span></div>
+            <div class="cd-sep">:</div>
+            <div class="cd-box"><span class="cd-num" id="cd-m">00</span><span class="cd-lbl">min</span></div>
+            <div class="cd-sep">:</div>
+            <div class="cd-box"><span class="cd-num" id="cd-s">00</span><span class="cd-lbl">seg</span></div>
+          </div>
+          <div class="note" id="prazoStatus"></div>
+        </div>
+      </article>
+    </div>
   </section>
 
   <section class="panel" id="p-ministerio" role="tabpanel">
@@ -684,6 +792,33 @@ document.querySelectorAll('.tab').forEach(t=>{
     document.getElementById('p-'+t.dataset.tab).classList.add('active');
   });
 });
+
+/* ---------- Cronômetro de prazo (Prazos & Pendências) ---------- */
+(function(){
+  var alvo=new Date(2026,8,11,18,0,0).getTime(); // 11/09/2026 às 18h00
+  var elD=document.getElementById('cd-d'), elH=document.getElementById('cd-h'),
+      elM=document.getElementById('cd-m'), elS=document.getElementById('cd-s'),
+      box=document.getElementById('prazoCountdown'), statusEl=document.getElementById('prazoStatus');
+  if(!box)return;
+  function pad(n){return String(n).padStart(2,'0');}
+  function tick(){
+    var diff=alvo-Date.now();
+    if(diff<=0){
+      box.classList.add('expired');
+      elD.textContent='00';elH.textContent='00';elM.textContent='00';elS.textContent='00';
+      statusEl.textContent='Prazo encerrado — vencia em 11/09 às 18h00.';
+      return;
+    }
+    var d=Math.floor(diff/86400000); diff-=d*86400000;
+    var h=Math.floor(diff/3600000); diff-=h*3600000;
+    var m=Math.floor(diff/60000); diff-=m*60000;
+    var s=Math.floor(diff/1000);
+    elD.textContent=pad(d); elH.textContent=pad(h); elM.textContent=pad(m); elS.textContent=pad(s);
+    statusEl.textContent='Prazo final: 11 de setembro de 2026, às 18h00.';
+  }
+  tick();
+  setInterval(tick,1000);
+})();
 
 /* ---------- Sincronização com a planilha ---------- */
 function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
